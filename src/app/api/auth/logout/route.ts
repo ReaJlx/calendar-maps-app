@@ -6,7 +6,8 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    const response = NextResponse.redirect(new URL('/', { href: 'http://localhost:3000' }));
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = NextResponse.redirect(new URL('/', baseUrl));
 
     // Clear cookies
     response.cookies.delete('google_access_token');

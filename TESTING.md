@@ -1,198 +1,648 @@
-# Calendar Maps App - Testing Guide
+# Calendar Maps - Testing Guide
 
-## Test Scenarios
+## Testing Strategy
 
-### 1. Authentication Flow ✓
-**Objective:** Verify OAuth login works correctly
+This guide covers all testing approaches for the Calendar Maps application.
 
-**Steps:**
-1. Navigate to http://localhost:3000
-2. Click "Sign in with Google"
-3. Authenticate with Google account
-4. Should redirect to /dashboard
-5. Verify user is authenticated
+## Table of Contents
 
-**Expected:** User can successfully login and access dashboard
+1. [Unit Testing](#unit-testing)
+2. [Integration Testing](#integration-testing)
+3. [E2E Testing](#e2e-testing)
+4. [API Testing](#api-testing)
+5. [Performance Testing](#performance-testing)
+6. [Security Testing](#security-testing)
 
-### 2. Event Fetching ✓
-**Objective:** Verify calendar events are fetched correctly
+---
 
-**Steps:**
-1. Login to app
-2. Navigate to /dashboard
-3. Wait for events to load
-4. Check browser console for errors
-5. Verify event count matches
+## Unit Testing
 
-**Expected:** Events load without errors, count displays correctly
+Test individual functions and components in isolation.
 
-### 3. Location Filtering ✓
-**Objective:** Verify only events with locations show
+### Test Utilities
 
-**Steps:**
-1. Access dashboard
-2. Verify "Events with locations" count
-3. Check all displayed events have location field
-4. Compare with Google Calendar
+```typescript
+// src/__tests__/setup.ts
+import { expect, test, describe } from '@jest/globals';
 
-**Expected:** Only events with location addresses shown, count is accurate
-
-### 4. Map Display ✓
-**Objective:** Verify Google Map loads and displays markers
-
-**Steps:**
-1. Access dashboard
-2. Wait for map to load
-3. Verify map tiles load
-4. Count markers on map
-5. Verify marker count matches event count
-
-**Expected:** Map loads with correct number of markers
-
-### 5. Geocoding ✓
-**Objective:** Verify address to coordinates conversion
-
-**Steps:**
-1. Add test event with location "Paris, France"
-2. Load dashboard
-3. Verify marker appears on map
-4. Check marker is in Paris region
-5. Test with various location formats
-
-**Expected:** Addresses correctly converted to map coordinates
-
-### 6. Info Windows ✓
-**Objective:** Verify event details display in map popups
-
-**Steps:**
-1. Click on any marker on map
-2. Verify info window appears
-3. Check event title shows
-4. Check location address shows
-5. Check event time shows
-
-**Expected:** All event info displays correctly in popup
-
-### 7. Event List View ✓
-**Objective:** Verify events display in list format
-
-**Steps:**
-1. Scroll down dashboard
-2. See event list below map
-3. Verify event cards show
-4. Check title, location, time on each card
-5. Verify list matches map markers
-
-**Expected:** Event list shows all events with locations
-
-### 8. Real-time Refresh ✓
-**Objective:** Verify events refresh periodically
-
-**Steps:**
-1. Load dashboard
-2. Add new event to Google Calendar with location
-3. Wait 5+ minutes
-4. Verify new event appears on map
-5. Check event count increased
-
-**Expected:** New events appear after refresh interval
-
-### 9. Error Handling ✓
-**Objective:** Verify graceful error handling
-
-**Steps:**
-1. Disconnect internet temporarily
-2. Trigger event fetch
-3. Verify error message displays
-4. Verify map still displays
-5. Check retry works when online
-
-**Expected:** Errors display without breaking UI, retry works
-
-### 10. Performance ✓
-**Objective:** Verify app performs well with many events
-
-**Steps:**
-1. Load calendar with 50+ events
-2. Monitor load time
-3. Check memory usage
-4. Test map interactions (pan, zoom)
-5. Verify no lag in interactions
-
-**Expected:** Events load in < 5 seconds, interactions smooth
-
-## Manual Testing Checklist
-
-- [ ] Login flow works
-- [ ] Events fetch correctly
-- [ ] Only events with locations show
-- [ ] Map displays properly
-- [ ] Markers appear on map
-- [ ] Clicking markers shows event details
-- [ ] Event list displays
-- [ ] Geocoding works for various address formats
-- [ ] Pagination works (if > 50 events)
-- [ ] Mobile responsive design works
-- [ ] Dark mode (if implemented) works
-- [ ] Logout works and clears auth
-- [ ] Session timeout works
-- [ ] Keyboard navigation works
-- [ ] Accessibility features work
-
-## Automated Testing
-
-### Unit Tests
-```bash
-npm run test
+export const testUtils = {
+  expectError: (fn: () => void, message?: string) => {
+    expect(fn).toThrow(message);
+  },
+  expectArrayLength: (arr: any[], length: number) => {
+    expect(arr).toHaveLength(length);
+  },
+};
 ```
 
-### Integration Tests
+### Calendar Service Tests
+
+```typescript
+// src/__tests__/lib/calendar-service.test.ts
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+import {
+  filterEvents,
+  sortEvents,
+  getEventDuration,
+  groupEventsByDate,
+} from '@/lib/calendar-service';
+import { CalendarEvent, EventSortBy } from '@/types';
+
+describe('Calendar Service', () => {
+  let mockEvents: CalendarEvent[];
+
+  beforeEach(() => {
+    mockEvents = [
+      {
+        id: '1',
+        summary: 'Meeting A',
+        location: 'Room 1',
+        startTime: new Date('2024-02-15T09:00:00'),
+        endTime: new Date('2024-02-15T10:00:00'),
+        status: 'confirmed',
+      },
+      {
+        id: '2',
+        summary: 'Meeting B',
+        location: 'Room 2',
+        startTime: new Date('2024-02-15T14:00:00'),
+        endTime: new Date('2024-02-15T15:00:00'),
+        status: 'confirmed',
+      },
+    ];
+  });
+
+  describe('filterEvents', () => {
+    test('should filter events with locations', () => {
+      const result = filterEvents(mockEvents, { hasLocation: true });
+      expect(result).toHaveLength(2);
+    });
+
+    test('should filter events by location keyword', () => {
+      const result = filterEvents(mockEvents, { locationKeyword: 'Room 1' });
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('1');
+    });
+
+    test('should filter events by date range', () => {
+      const result = filterEvents(mockEvents, {
+        startDate: new Date('2024-02-15T10:00:00'),
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('2');
+    });
+  });
+
+  describe('sortEvents', () => {
+    test('should sort by start time ascending', () => {
+      const result = sortEvents(mockEvents, EventSortBy.START_TIME, true);
+      expect(result[0].id).toBe('1');
+      expect(result[1].id).toBe('2');
+    });
+
+    test('should sort by title', () => {
+      const result = sortEvents(mockEvents, EventSortBy.TITLE, true);
+      expect(result[0].summary).toBe('Meeting A');
+    });
+  });
+
+  describe('getEventDuration', () => {
+    test('should calculate duration in minutes', () => {
+      const duration = getEventDuration(mockEvents[0]);
+      expect(duration).toBe(60);
+    });
+  });
+
+  describe('groupEventsByDate', () => {
+    test('should group events by date', () => {
+      const result = groupEventsByDate(mockEvents);
+      expect(Object.keys(result)).toHaveLength(1);
+      expect(result['2024-02-15']).toHaveLength(2);
+    });
+  });
+});
+```
+
+### Geocoding Service Tests
+
+```typescript
+// src/__tests__/lib/geocoding.test.ts
+import { describe, test, expect, beforeEach } from '@jest/globals';
+import {
+  parseCoordinatesFromLocation,
+  isValidCoordinates,
+  calculateDistance,
+  calculateBounds,
+} from '@/lib/geocoding';
+
+describe('Geocoding Service', () => {
+  describe('parseCoordinatesFromLocation', () => {
+    test('should parse coordinates in parentheses', () => {
+      const result = parseCoordinatesFromLocation(
+        'Conference Room (37.7749, -122.4194)'
+      );
+      expect(result.coordinates).toEqual({ lat: 37.7749, lng: -122.4194 });
+      expect(result.address).toBe('Conference Room');
+    });
+
+    test('should return address if no coordinates', () => {
+      const result = parseCoordinatesFromLocation('123 Main St');
+      expect(result.coordinates).toBeUndefined();
+      expect(result.address).toBe('123 Main St');
+    });
+  });
+
+  describe('isValidCoordinates', () => {
+    test('should validate correct coordinates', () => {
+      expect(isValidCoordinates(37.7749, -122.4194)).toBe(true);
+    });
+
+    test('should reject invalid latitude', () => {
+      expect(isValidCoordinates(91, 0)).toBe(false);
+    });
+
+    test('should reject invalid longitude', () => {
+      expect(isValidCoordinates(0, 181)).toBe(false);
+    });
+  });
+
+  describe('calculateDistance', () => {
+    test('should calculate distance between coordinates', () => {
+      // San Francisco to Los Angeles
+      const distance = calculateDistance(
+        37.7749,
+        -122.4194,
+        34.0522,
+        -118.2437
+      );
+      expect(distance).toBeGreaterThan(500);
+      expect(distance).toBeLessThan(600);
+    });
+  });
+
+  describe('calculateBounds', () => {
+    test('should calculate bounding box', () => {
+      const points = [
+        { lat: 37.7749, lng: -122.4194 },
+        { lat: 34.0522, lng: -118.2437 },
+      ];
+      const bounds = calculateBounds(points);
+
+      expect(bounds.ne.lat).toBe(37.7749);
+      expect(bounds.sw.lat).toBe(34.0522);
+      expect(bounds.ne.lng).toBe(-118.2437);
+      expect(bounds.sw.lng).toBe(-122.4194);
+    });
+  });
+});
+```
+
+---
+
+## Integration Testing
+
+Test multiple components working together.
+
+### API Integration Tests
+
+```typescript
+// src/__tests__/api/events.integration.test.ts
+import { describe, test, expect, beforeAll } from '@jest/globals';
+
+describe('Events API Integration', () => {
+  let apiUrl: string;
+
+  beforeAll(() => {
+    apiUrl = process.env.TEST_API_URL || 'http://localhost:3000';
+  });
+
+  describe('GET /api/events', () => {
+    test('should fetch events with default parameters', async () => {
+      const response = await fetch(`${apiUrl}/api/events`);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.data).toBeInstanceOf(Array);
+      expect(data.count).toBeGreaterThanOrEqual(0);
+    });
+
+    test('should respect maxResults parameter', async () => {
+      const response = await fetch(`${apiUrl}/api/events?maxResults=5`);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.data.length).toBeLessThanOrEqual(5);
+    });
+
+    test('should filter events with locationOnly', async () => {
+      const response = await fetch(`${apiUrl}/api/events?locationOnly=true`);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      data.data.forEach((event: any) => {
+        expect(event.location).toBeDefined();
+      });
+    });
+
+    test('should sort events correctly', async () => {
+      const response = await fetch(`${apiUrl}/api/events?sortBy=title`);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      if (data.data.length > 1) {
+        for (let i = 0; i < data.data.length - 1; i++) {
+          expect(
+            data.data[i].summary.localeCompare(data.data[i + 1].summary)
+          ).toBeLessThanOrEqual(0);
+        }
+      }
+    });
+  });
+
+  describe('POST /api/geocode', () => {
+    test('should geocode valid address', async () => {
+      const response = await fetch(`${apiUrl}/api/geocode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: '1600 Pennsylvania Avenue NW, Washington, DC',
+        }),
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.data.coordinates).toBeDefined();
+      expect(data.data.coordinates.lat).toBeCloseTo(38.8951, 2);
+      expect(data.data.coordinates.lng).toBeCloseTo(-77.0369, 2);
+    });
+
+    test('should handle invalid address', async () => {
+      const response = await fetch(`${apiUrl}/api/geocode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: 'xyz123notarealaddressxyz',
+        }),
+      });
+
+      expect([404, 500]).toContain(response.status);
+    });
+
+    test('should batch geocode multiple addresses', async () => {
+      const response = await fetch(`${apiUrl}/api/geocode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addresses: [
+            '1600 Pennsylvania Avenue NW, Washington, DC',
+            'One Apple Park Way, Cupertino, CA',
+          ],
+          batch: true,
+        }),
+      });
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(Object.keys(data.data).length).toBe(2);
+    });
+  });
+});
+```
+
+---
+
+## E2E Testing
+
+Test complete user flows.
+
+### Example with Playwright
+
+```typescript
+// e2e/dashboard.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('Dashboard E2E', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('http://localhost:3000/dashboard');
+  });
+
+  test('should load dashboard and display events', async ({ page }) => {
+    // Wait for title
+    await expect(page.locator('h1')).toContainText('Calendar Events Map');
+
+    // Wait for events to load
+    await page.waitForSelector('[role="list"]');
+
+    // Verify events are displayed
+    const events = await page.locator('[role="listitem"]');
+    expect(await events.count()).toBeGreaterThan(0);
+  });
+
+  test('should filter events by location', async ({ page }) => {
+    // Enter location filter
+    await page.fill('input[placeholder*="Search locations"]', 'coffee');
+
+    // Wait for filtered results
+    await page.waitForTimeout(500);
+
+    // Verify filtered events
+    const events = await page.locator('[role="listitem"]');
+    const count = await events.count();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+
+  test('should click event marker on map', async ({ page }) => {
+    // Wait for map to load
+    await page.waitForSelector('[role="main"]');
+
+    // Get marker
+    const markers = await page.locator('[role="img"][title]');
+    if ((await markers.count()) > 0) {
+      // Click first marker
+      await markers.first().click();
+
+      // Verify info window appears
+      await expect(page.locator('text=/Team|Meeting/')).toBeVisible();
+    }
+  });
+
+  test('should sort events', async ({ page }) => {
+    // Open sort dropdown
+    await page.selectOption('select[aria-label*="Sort"]', 'title');
+
+    // Wait for sorting
+    await page.waitForTimeout(500);
+
+    // Verify events are sorted
+    const events = await page.locator('[role="listitem"] h3');
+    const titles: string[] = [];
+    for (let i = 0; i < await events.count(); i++) {
+      titles.push(await events.nth(i).textContent() || '');
+    }
+
+    // Check if sorted alphabetically
+    for (let i = 0; i < titles.length - 1; i++) {
+      expect(titles[i].localeCompare(titles[i + 1])).toBeLessThanOrEqual(0);
+    }
+  });
+});
+```
+
+---
+
+## API Testing
+
+Test API endpoints directly.
+
+### Using cURL
+
+```bash
+#!/bin/bash
+
+API_URL="http://localhost:3000"
+PASSED=0
+FAILED=0
+
+echo "Testing Calendar Maps API..."
+
+# Test 1: Fetch events
+echo "Test 1: GET /api/events"
+RESPONSE=$(curl -s -w "\n%{http_code}" "$API_URL/api/events?daysAhead=30")
+STATUS=$(echo "$RESPONSE" | tail -1)
+if [ "$STATUS" -eq 200 ]; then
+  echo "✓ PASSED"
+  ((PASSED++))
+else
+  echo "✗ FAILED (Status: $STATUS)"
+  ((FAILED++))
+fi
+
+# Test 2: Geocode address
+echo "Test 2: POST /api/geocode"
+RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/geocode" \
+  -H "Content-Type: application/json" \
+  -d '{"address":"1600 Pennsylvania Avenue NW"}')
+STATUS=$(echo "$RESPONSE" | tail -1)
+if [ "$STATUS" -eq 200 ]; then
+  echo "✓ PASSED"
+  ((PASSED++))
+else
+  echo "✗ FAILED (Status: $STATUS)"
+  ((FAILED++))
+fi
+
+echo ""
+echo "Tests: $PASSED passed, $FAILED failed"
+```
+
+---
+
+## Performance Testing
+
+Test application performance under load.
+
+### Load Testing with k6
+
+```javascript
+// k6-load-test.js
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  stages: [
+    { duration: '30s', target: 20 },
+    { duration: '1m30s', target: 100 },
+    { duration: '30s', target: 0 },
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<500', 'p(99)<1000'],
+    http_req_failed: ['<0.1'],
+  },
+};
+
+export default function () {
+  // Test events endpoint
+  const res1 = http.get('http://localhost:3000/api/events?daysAhead=30');
+  check(res1, {
+    'events status is 200': (r) => r.status === 200,
+    'events response time < 500ms': (r) => r.timings.duration < 500,
+  });
+
+  sleep(1);
+
+  // Test geocoding
+  const res2 = http.post(
+    'http://localhost:3000/api/geocode',
+    JSON.stringify({
+      address: '123 Main St, San Francisco, CA',
+    }),
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+  check(res2, {
+    'geocode status is 200': (r) => r.status === 200,
+    'geocode response time < 1000ms': (r) => r.timings.duration < 1000,
+  });
+
+  sleep(2);
+}
+```
+
+Run: `k6 run k6-load-test.js`
+
+---
+
+## Security Testing
+
+Test application security.
+
+### OWASP Security Checks
+
+```bash
+#!/bin/bash
+
+echo "Running Security Tests..."
+
+# Test 1: Check for sensitive data in code
+echo "Test 1: Searching for secrets in code..."
+if grep -r "GOOGLE_CLIENT_SECRET\|API_KEY\|PASSWORD" src/ --include="*.ts" --include="*.tsx"; then
+  echo "✗ FAILED: Found hardcoded secrets"
+  exit 1
+else
+  echo "✓ PASSED: No hardcoded secrets found"
+fi
+
+# Test 2: Check dependencies for vulnerabilities
+echo "Test 2: Checking for vulnerable dependencies..."
+npm audit --audit-level=moderate
+
+# Test 3: Test HTTPS redirect
+echo "Test 3: Testing HTTPS redirect..."
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L http://localhost:3000)
+if [ "$STATUS" -eq 200 ]; then
+  echo "✓ PASSED"
+else
+  echo "✗ FAILED (Status: $STATUS)"
+fi
+```
+
+---
+
+## Running Tests
+
+### Setup
+
+```bash
+# Install testing dependencies
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom
+npm install --save-dev playwright
+npm install --save-dev k6
+```
+
+### Run Unit Tests
+
+```bash
+npm test                # Run all tests
+npm test -- --watch    # Watch mode
+npm test -- --coverage # Coverage report
+```
+
+### Run Integration Tests
+
 ```bash
 npm run test:integration
 ```
 
-### E2E Tests
+### Run E2E Tests
+
 ```bash
 npm run test:e2e
 ```
 
-## Performance Benchmarks
+### Run Performance Tests
 
-### Target Metrics
-- First Paint: < 2s
-- Time to Interactive: < 3s
-- Map Load: < 2s
-- Event Fetch: < 2s
-- Geocoding per address: < 1s
-
-### Monitoring
-- Monitor API response times
-- Track geocoding cache hit rate
-- Monitor map performance
-- Track user interactions
-
-## Bug Report Template
-
-**Title:** [Component] Brief description
-
-**Steps to Reproduce:**
-1. ...
-2. ...
-
-**Expected:**
-...
-
-**Actual:**
-...
-
-**Environment:**
-- Browser: ...
-- OS: ...
-- App Version: ...
-
-**Screenshots:**
-[Attach if applicable]
+```bash
+npm run test:performance
+```
 
 ---
 
-*Last Updated: Jan 29, 2025*
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+```
+
+---
+
+## Test Coverage Goals
+
+- Unit Tests: 80%+
+- Integration Tests: 70%+
+- E2E Tests: Key user flows
+- Critical paths: 100%
+
+## References
+
+- [Jest Documentation](https://jestjs.io/)
+- [Playwright Documentation](https://playwright.dev/)
+- [k6 Documentation](https://k6.io/docs/)
