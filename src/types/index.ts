@@ -8,15 +8,15 @@
 export interface CalendarEvent {
   id: string;
   summary: string;
-  description?: string;
-  location?: string;
+  description?: string | null;
+  location?: string | null;
   startTime: Date;
   endTime: Date;
-  timezone?: string;
+  timezone?: string | null;
   attendees?: EventAttendee[];
-  organizer?: EventOrganizer;
-  hangoutLink?: string;
-  htmlLink?: string;
+  organizer?: EventOrganizer | null;
+  hangoutLink?: string | null;
+  htmlLink?: string | null;
   conferenceData?: ConferenceData;
   status: 'confirmed' | 'tentative' | 'cancelled';
 }
@@ -26,9 +26,9 @@ export interface CalendarEvent {
  */
 export interface EventAttendee {
   email: string;
-  displayName?: string;
+  displayName?: string | null;
   responseStatus: 'needsAction' | 'declined' | 'tentativelyAccepted' | 'accepted';
-  optional?: boolean;
+  optional?: boolean | null;
 }
 
 /**
@@ -36,7 +36,7 @@ export interface EventAttendee {
  */
 export interface EventOrganizer {
   email: string;
-  displayName?: string;
+  displayName?: string | null;
 }
 
 /**

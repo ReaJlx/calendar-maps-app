@@ -67,25 +67,27 @@ export async function fetchCalendarEvents(
 
     return {
       id: item.id || '',
-      summary: item.summary || 'Untitled Event',
-      description: item.description,
-      location: item.location,
+      summary: item.summary ?? 'Untitled Event',
+      description: item.description ?? undefined,
+      location: item.location ?? undefined,
       startTime: new Date(startDate || new Date()),
       endTime: new Date(endDate || new Date()),
-      timezone: item.start?.timeZone,
+      timezone: item.start?.timeZone ?? undefined,
       status: (item.status as any) || 'confirmed',
       attendees: item.attendees?.map((attendee) => ({
         email: attendee.email || '',
-        displayName: attendee.displayName,
-        responseStatus: (attendee.responseStatus as any) || 'needsAction',
-        optional: attendee.optional,
+        displayName: attendee.displayName ?? undefined,
+        responseStatus: (attendee.responseStatus as any) ?? 'needsAction',
+        optional: attendee.optional ?? false,
       })),
-      organizer: item.organizer && {
-        email: item.organizer.email || '',
-        displayName: item.organizer.displayName,
-      },
-      hangoutLink: item.hangoutLink,
-      htmlLink: item.htmlLink,
+      organizer: item.organizer
+        ? {
+            email: item.organizer.email || '',
+            displayName: item.organizer.displayName ?? undefined,
+          }
+        : undefined,
+      hangoutLink: item.hangoutLink ?? undefined,
+      htmlLink: item.htmlLink ?? undefined,
       conferenceData: item.conferenceData as any,
     };
   });

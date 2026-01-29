@@ -62,12 +62,12 @@ export async function getCalendarEvents(
       const event: CalendarEvent = {
         id: item.id || '',
         summary: item.summary || 'Untitled Event',
-        description: item.description,
+        description: item.description ?? undefined,
         startTime: new Date(item.start?.dateTime || item.start?.date || ''),
         endTime: new Date(item.end?.dateTime || item.end?.date || ''),
-        location: item.location,
-        hangoutLink: item.hangoutLink,
-        htmlLink: item.htmlLink,
+        location: item.location ?? undefined,
+        hangoutLink: item.hangoutLink ?? undefined,
+        htmlLink: item.htmlLink ?? undefined,
       };
 
       events.push(event);

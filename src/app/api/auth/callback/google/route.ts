@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: (tokens.expiry_date || 0) - Date.now(),
+      maxAge: Math.max(0, (tokens.expiry_date ?? 0) - Date.now()),
     });
 
     if (tokens.refresh_token) {
