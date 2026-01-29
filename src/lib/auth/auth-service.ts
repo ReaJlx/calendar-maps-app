@@ -114,8 +114,8 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token || undefined,
       expiry_date: tokens.expiry_date ?? undefined,
-      token_type: tokens.token_type,
-      scope: tokens.scope,
+      token_type: tokens.token_type || undefined,
+      scope: tokens.scope || undefined,
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Failed to exchange code';
@@ -145,9 +145,9 @@ export async function refreshTokens(refreshToken: string): Promise<GoogleTokens>
     return {
       access_token: credentials.access_token,
       refresh_token: credentials.refresh_token || refreshToken,
-      expiry_date: credentials.expiry_date,
-      token_type: credentials.token_type,
-      scope: credentials.scope,
+      expiry_date: credentials.expiry_date ?? undefined,
+      token_type: credentials.token_type || undefined,
+      scope: credentials.scope || undefined,
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Failed to refresh tokens';
