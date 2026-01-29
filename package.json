@@ -1,0 +1,47 @@
+{
+  "name": "calendar-maps-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.36.10",
+    "@supabase/supabase-js": "^2.93.2",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.1",
+    "cloudinary": "^2.9.0",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.1",
+    "next": "16.1.6",
+    "next-cloudinary": "^6.17.5",
+    "postgres": "^3.4.8",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "svix": "^1.84.1",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^3.25.76",
+    "googleapis": "^140.0.0",
+    "@react-google-maps/api": "^2.20.2",
+    "google-map-react": "^2.2.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "prelude-ls": "^1.2.1",
+    "tailwindcss": "^4",
+    "type-check": "^0.4.0",
+    "typescript": "^5"
+  }
+}
