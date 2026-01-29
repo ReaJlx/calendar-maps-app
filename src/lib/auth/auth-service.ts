@@ -8,7 +8,7 @@ import { GoogleTokens, AuthUser } from '@/types';
 /**
  * Create or initialize OAuth2 client
  */
-export function initializeOAuth2Client(tokens?: GoogleTokens): OAuth2Client {
+export function initializeOAuth2Client(tokens?: Partial<GoogleTokens>): OAuth2Client {
   const client = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
