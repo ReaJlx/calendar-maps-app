@@ -4,12 +4,13 @@
 
 import Link from 'next/link';
 
-export default function AuthErrorPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
-}) {
-  const error = searchParams.error || 'Unknown error';
+interface AuthErrorPageProps {
+  searchParams: Promise<{ error?: string }>;
+}
+
+export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
+  const params = await searchParams;
+  const error = params.error || 'Unknown error';
 
   return (
     <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center px-4">

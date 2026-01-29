@@ -1,3 +1,6 @@
-export { useStats } from './useStats'
-export { usePing } from './usePing'
-export { useUpload } from './useUpload'
+/**
+ * React hooks for Calendar Maps application
+ */
+
+export { useCalendarEvents } from './useCalendarEvents';
+export { useGeocoding } from './useGeocoding';
