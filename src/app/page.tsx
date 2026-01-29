@@ -1,128 +1,88 @@
 /**
- * Home Page
- * 
- * Landing page with navigation and feature status.
+ * Home page - Landing page with login prompt
  */
 
-import Image from "next/image";
-import Link from "next/link";
+import Link from 'next/link';
 
-import { getAuthUser } from "@/lib/auth";
-import {
-  isClerkConfigured,
-  isUpstashConfigured,
-  isCloudinaryConfigured,
-  isDatabaseConfigured,
-} from "@/config/env";
-
-export const dynamic = "force-dynamic";
-
-export default async function Home() {
-  const user = await getAuthUser();
-
-  // Dynamically import SignOutButton only when needed
-  const SignOutButton = user
-    ? (await import("@clerk/nextjs")).SignOutButton
-    : null;
-
-  const featureStatus = [
-    { name: "Database", configured: isDatabaseConfigured() },
-    { name: "Clerk Auth", configured: isClerkConfigured() },
-    { name: "Upstash Cache", configured: isUpstashConfigured() },
-    { name: "Cloudinary Uploads", configured: isCloudinaryConfigured() },
-  ];
-
+export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between px-16 py-32 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            App Factory Template
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center px-4">
+      <div className="max-w-2xl w-full bg-white rounded-lg shadow-xl p-8 md:p-12">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            📍 Calendar Maps
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            A Next.js starter with Clerk authentication, Drizzle ORM, and
-            Tailwind CSS. Ready to build your next project.
+          <p className="text-xl text-gray-600">
+            Visualize your Google Calendar events on an interactive map
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-4">
-          <div className="flex flex-wrap gap-2">
-            {featureStatus.map((feature) => (
-              <span
-                key={feature.name}
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  feature.configured
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
-                }`}
-              >
-                {feature.configured ? "✓" : "⚠"} {feature.name}
-              </span>
-            ))}
+        <div className="space-y-6 mb-8">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0 h-6 w-6 text-blue-500 font-bold text-lg">✓</div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Connect Your Calendar
+              </h3>
+              <p className="text-gray-600">
+                Securely authenticate with your Google account
+              </p>
+            </div>
           </div>
-          {!featureStatus.every((f) => f.configured) && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Some services are not configured. Check your <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">.env</code> file.
-            </p>
-          )}
+
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0 h-6 w-6 text-blue-500 font-bold text-lg">✓</div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                View Events on a Map
+              </h3>
+              <p className="text-gray-600">
+                See all your calendar events with locations on an interactive Google Map
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0 h-6 w-6 text-blue-500 font-bold text-lg">✓</div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Auto-Geocoding
+              </h3>
+              <p className="text-gray-600">
+                Automatically converts event locations into map coordinates
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0 h-6 w-6 text-blue-500 font-bold text-lg">✓</div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Real-Time Updates
+              </h3>
+              <p className="text-gray-600">
+                Events refresh periodically to show latest changes
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          {user ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-              >
-                Dashboard
-              </Link>
-              {SignOutButton && (
-                <SignOutButton>
-                  <button className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]">
-                    Sign Out
-                  </button>
-                </SignOutButton>
-              )}
-            </>
-          ) : (
-            <>
-              <Link
-                href="/sign-in"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+        <div className="flex flex-col gap-4">
           <Link
-            href="/demo/cache"
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[220px]"
+            href="/api/auth/login"
+            className="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors text-center"
           >
-            Cache + Rate Limit Demo
-          </Link>
-          <Link
-            href="/demo/media"
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[220px]"
-          >
-            Media Upload Demo
+            Sign in with Google
           </Link>
         </div>
-      </main>
+
+        <div className="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
+          <p>
+            This app requires access to your Google Calendar to function.
+            Your data is never stored or shared.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
