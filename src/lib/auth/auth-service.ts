@@ -112,7 +112,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
 
     return {
       access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+      refresh_token: tokens.refresh_token || undefined,
       expiry_date: tokens.expiry_date,
       token_type: tokens.token_type,
       scope: tokens.scope,
